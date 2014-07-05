@@ -4,7 +4,7 @@ Code for a test signaler using the stm32F100xx in STM32VL-Discovery board.
 output from tester: a pulse of variable width
 
     _________
-    |				|					T = 10ms	: goto NEXT test
+    |       |					T = 10ms	: goto NEXT test
     |<--T-->|					T
 ____|       |____			
 		
