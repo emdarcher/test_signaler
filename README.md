@@ -17,8 +17,8 @@ __INPUT TO TESTER__: Pulse similar to output
 
 __Behavior__:	
 
-*		LED1 Blinks when TEST_PASS is detected
-*		LED1 Stays on when TEST_DONE is detected
+*		LED1 Blinks when TEST_PASS is detected (steady in the polled code)
+*		LED1 Stays on when TEST_DONE is detected (blinking in the polled code)
 *		LED2 Stays on when TEST_FAIL is detected
 
 * 	A button causes NEXT signal to be sent when it is pressed
