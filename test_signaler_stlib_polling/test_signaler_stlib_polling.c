@@ -202,7 +202,7 @@ uint8_t to_next_state = 0;
             break;
     
     }
-    state_num = (to_next_state) ? 4 : 1;
+    state_num = (to_next_state) ? 4 : 0;
 
 }
 
