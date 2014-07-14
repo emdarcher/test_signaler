@@ -37,7 +37,7 @@ int main(void)
     while (1)   {
         //int i;
        
-        while((TIM2->SR & TIM_SR_CC3IF) == 0); //wait till done
+        while((TIM2->SR & TIM_SR_CC2IF) == 0); //wait till done
         
         pulse_store = TIM4->CCR2;
         //get_pulse_ms_tim4();
