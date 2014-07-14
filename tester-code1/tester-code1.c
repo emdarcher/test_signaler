@@ -90,8 +90,7 @@ void init_timers(void) {
                     GPIO_CRL_MODE6  );//| GPIO_CRL_MODE7  );
                     
     //PB8 output push pull, alternate function, 2MHz
-    GPIOB->CRH |= ( GPIO_CRH_CNF8_1 |    GPIOC->CRH |= ( GPIO_CRH_CNF9_1 | GPIO_CRH_MODE9_1 );
-
+    GPIOB->CRH |= ( GPIO_CRH_CNF8_1 |    
                     GPIO_CRH_MODE8_1);
                     
     GPIOB->CRH &= ~(GPIO_CRH_CNF8_0 |
