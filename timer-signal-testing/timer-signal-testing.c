@@ -1,7 +1,6 @@
 //send out a pulse and then compture it with another timer.
 //display the response result on LEDs
 
-
 #include <stm32f10x.h>
 
 void Delay(uint32_t nTime);
@@ -180,8 +179,6 @@ void get_pulse_ms_tim4(void){
 void send_pulse_tim2(uint8_t pulse_ms){
     
     uint16_t arr_val = TIM2->ARR;
-    
-    
     TIM2->CCR3 = (uint16_t)(arr_val - pulse_ms);
     
     TIM2->CR1 |= TIM_CR1_CEN;
