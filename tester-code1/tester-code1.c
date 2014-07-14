@@ -3,9 +3,15 @@
 
 #include <stm32f10x.h>
 
+#define GREEN_LED (1<<9)
+#define BLUE_LED (1<<8)
+
 void Delay(uint32_t nTime);
 
 void init_timers(void);
+void init_tim3(void);
+void init_LEDs(void);
+
 
 void send_pulse_tim2(uint8_t pulse_ms);
 
@@ -18,34 +24,25 @@ int main(void)
 {
     
     init_timers();
+    init_tim3();
+    init_LEDs();
+    
     //init_SPI1();
     //init_digit_pins();
     
     // Configure SysTick Timer
-    /*(3)*/
     if (SysTick_Config(SystemCoreClock / 1000))
         while (1);
-
-    //uart_open(USART1, 9600, USART_FLAG_TXE);
     
     while (1)   {
-        int i;
-        //enable TIM16
-        //TIM15->CR1 |= ( TIM_CR1_CEN );//enable TIM16
-    
-        //send_pulse_tim2(10);
-        //TIM15->CR1 |= ( TIM_CR1_CEN );//enable TIM16
-        //Delay(110);
+        //int i;
+       
         while((TIM2->SR & TIM_SR_CC3IF) == 0); //wait till done
         
         pulse_store = TIM4->CCR2;
-        get_pulse_ms_tim4();
-        //uart_print_string_int(pulse_ms_tim4,USART1);
-        //uart_putc('\n',USART1);
-        //disable TIM16
-        //TIM15->CR1 &= ~( TIM_CR1_CEN );
-        //Delay(1000);
-    }   
+        //get_pulse_ms_tim4();
+        
+    }
 }
 
 // Timer code
@@ -74,9 +71,9 @@ void init_timers(void) {
     //------------setup GPIO pins------------ 
     
     //PB6-7 input floating, 
-    GPIOB->CRL |= ( GPIO_CRL_CNF6_0 | GPIO_CRL_CNF7_0 );
-    GPIOB->CRL &= ~(GPIO_CRL_CNF6_1 | GPIO_CRL_CNF7_1 |
-                    GPIO_CRL_MODE6  | GPIO_CRL_MODE7  );
+    GPIOB->CRL |= ( GPIO_CRL_CNF6_0 );//| GPIO_CRL_CNF7_0 );
+    GPIOB->CRL &= ~(GPIO_CRL_CNF6_1 | //GPIO_CRL_CNF7_1 |
+                    GPIO_CRL_MODE6  );//| GPIO_CRL_MODE7  );
                     
     //PB8 output push pull, alternate function, 2MHz
     GPIOB->CRH |= ( GPIO_CRH_CNF8_1 |
@@ -95,7 +92,7 @@ void init_timers(void) {
     //PA1 tim2_ch2
     //PUSH-PULL, AFIO, 2MHz
     GPIOA->CRL |= ( GPIO_CRL_CNF1_1 |
-                    GPIO_CRL_MODE1_1); //50MHz?
+                    GPIO_CRL_MODE1_1);
     GPIOA->CRL &= ~(GPIO_CRL_CNF1_0 |
                     GPIO_CRL_MODE1_0);
     
@@ -183,6 +180,44 @@ void send_pulse_tim2(uint8_t pulse_ms){
     
     TIM2->CR1 |= TIM_CR1_CEN;
     
+}
+
+void init_LEDs(void){
+
+    //setup clock for GPIOC
+    RCC->APB2ENR |= RCC_APB2ENR_IOPCEN;
+    
+    //----setup GPIOC config----
+    
+    //PC9 output push-pull 2MHz
+    //GPIOC->CRH |= ( GPIO_CRH_MODE9_1 );
+    //with AFIO for TIM3
+    GPIOC->CRH |= ( GPIO_CRH_CNF9_1 | GPIO_CRH_MODE9_1 );
+    
+    //PC8 output push-pull 2MHz
+    GPIOC->CRH |= ( GPIO_CRH_MODE8_1 );
+    
+    
+}
+
+void init_tim3(void){
+    
+    //setup clock for TIM3
+    RCC->APB1ENR |= RCC_APB1ENR_TIM3EN; 
+    
+    //remap TIM3 fully to the GPIOC pins
+    AFIO->MAPR |= AFIO_MAPR_TIM3_REMAP;
+    
+    TIM3->PSC = (uint16_t)((SystemCoreClock / 100000)-1); //get 100000Hz
+    TIM3->PSC = (uint16_t)(255); //0-255 PWM value
+    
+    //setup PWM Mode 1 with bits 111 for OC4
+    TIM3->CCMR2 |= ( TIM_CCMR2_OC4M_2 | TIM_CCMR2_OC4M_1 );
+    //enable CC4 output 
+    TIM3->CCER |= TIM_CCER_CC4E;
+    
+    //enable TIM3
+    TIM3->CR1 |= TIM_CR1_CEN;
 }
 
 static __IO uint32_t TimingDelay;
