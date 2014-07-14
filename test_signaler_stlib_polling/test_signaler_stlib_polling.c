@@ -5,8 +5,8 @@
 #include <stm32f10x_gpio.h>
 
 #define TEST_PASS 0
-#define TEST_DONE 1
-#define TEST_FAIL 2
+#define TEST_DONE 2
+#define TEST_FAIL 1
 
 uint8_t test_result;
 

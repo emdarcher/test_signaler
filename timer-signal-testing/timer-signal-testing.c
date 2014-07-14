@@ -36,7 +36,7 @@ int main(void)
         //send_pulse_tim2(10);
         //TIM15->CR1 |= ( TIM_CR1_CEN );//enable TIM16
         //Delay(110);
-        while((TIM2->SR & TIM_SR_CC2IF) == 0); //wait till done
+        //while((TIM2->SR & TIM_SR_CC2IF) == 0); //wait till done
         
         pulse_store = TIM4->CCR2;
         get_pulse_ms_tim4();

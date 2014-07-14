@@ -6,26 +6,38 @@
 #define GREEN_LED (1<<9)
 #define BLUE_LED (1<<8)
 
+#define TEST_PASS 0
+#define TEST_FAIL 1
+#define TEST_DONE 2
+#define TEST_ERROR 3
+
 void Delay(uint32_t nTime);
 
 void init_timers(void);
 void init_tim3(void);
 void init_LEDs(void);
 
+void set_pwm_G_LED(uint8_t pulse_width);
+void set_pwm_B_LED(uint8_t pulse_width);
 
 void send_pulse_tim2(uint8_t pulse_ms);
-
 void get_pulse_ms_tim4(void);
+
+void judge_pulse(void);
+void set_LEDs(void);
 
 volatile uint16_t pulse_ms_tim4;
 volatile uint16_t pulse_store;
+
+volatile uint8_t test_result;
 
 int main(void)
 {
     
     init_timers();
-    init_tim3();
+    //init_tim3();
     init_LEDs();
+    init_tim3();
     
     //init_SPI1();
     //init_digit_pins();
@@ -37,11 +49,15 @@ int main(void)
     while (1)   {
         //int i;
        
-        while((TIM2->SR & TIM_SR_CC2IF) == 0); //wait till done
+        //while((TIM2->SR & TIM_SR_UIF) == 0); //wait till done sending pulse
         
-        pulse_store = TIM4->CCR2;
+        //set_pwm_G_LED(128);
+        
+        //pulse_store = TIM4->CCR2;
         //get_pulse_ms_tim4();
         
+        //judge_pulse();
+        //set_LEDs();
     }
 }
 
@@ -165,12 +181,9 @@ void init_timers(void) {
 
 void get_pulse_ms_tim4(void){
     
-    //int difference = (TIM4->CCR2) - (TIM4->CCR1);
-    int stuff = (TIM4->CCR2);
+    while(((TIM4->SR) & TIM_SR_CC2IF) == 0); //wait till capture done
     
-    if(stuff > 0){
-        pulse_ms_tim4 = stuff;
-    }
+    pulse_ms_tim4 = TIM4->CCR2;
 }
 
 void send_pulse_tim2(uint8_t pulse_ms){
@@ -182,20 +195,83 @@ void send_pulse_tim2(uint8_t pulse_ms){
     
 }
 
+void judge_pulse(void){
+    
+    if((pulse_ms_tim4 > 7) && (pulse_ms_tim4 < 13)){
+        test_result = TEST_PASS;
+    }
+    else if((pulse_ms_tim4 > 97) && (pulse_ms_tim4 < 103)){
+        test_result = TEST_FAIL;
+    }
+    else if((pulse_ms_tim4 > 22) && (pulse_ms_tim4 < 28)){
+        test_result = TEST_DONE;
+    }
+    else {
+        test_result = TEST_ERROR;
+    }
+}
+
+void set_LEDs(void){
+    
+    switch (test_result){
+        
+        case TEST_PASS:
+            set_pwm_G_LED(128); //set green led blinking
+            //GPIOC->BRR |= BLUE_LED; //off blue led
+            set_pwm_B_LED(0);
+            break;
+        
+        case TEST_FAIL:
+            set_pwm_G_LED(0);//set green led off
+            //GPIOC->BSRR |= BLUE_LED; //on blue led
+            set_pwm_B_LED(255);
+            break;
+        
+        case TEST_DONE:
+            set_pwm_G_LED(255); //put green led steady on
+            set_pwm_B_LED(0); //put blue led off
+            break;
+        
+        case TEST_ERROR:
+            set_pwm_G_LED(0); //put green led off
+            set_pwm_B_LED(128); //blink blue led
+            break;
+            
+    }
+    
+}
+
+void set_pwm_G_LED(uint8_t pulse_width){
+    
+    TIM3->CCR4 = (uint16_t)(pulse_width);
+    
+}
+
+void set_pwm_B_LED(uint8_t pulse_width){
+    
+    TIM3->CCR3 = (uint16_t)(pulse_width);
+    
+}
+
+
 void init_LEDs(void){
 
     //setup clock for GPIOC
     RCC->APB2ENR |= RCC_APB2ENR_IOPCEN;
-    
+    //RCC->APB2ENR |= RCC_APB2ENR_IOPBEN;
     //----setup GPIOC config----
     
     //PC9 output push-pull 2MHz
-    //GPIOC->CRH |= ( GPIO_CRH_MODE9_1 );
+    //GPIOC->CRH |= ( GPIO_CRH_MODE9 );
     //with AFIO for TIM3
     GPIOC->CRH |= ( GPIO_CRH_CNF9_1 | GPIO_CRH_MODE9_1 );
+    //GPIOB->CRL |= ( GPIO_CRL_CNF1_1 | GPIO_CRL_MODE1_1);
     
     //PC8 output push-pull 2MHz
-    GPIOC->CRH |= ( GPIO_CRH_MODE8_1 );
+    //GPIOC->CRH |= ( GPIO_CRH_MODE8_1 );
+    //for AFIO
+    GPIOC->CRH |= ( GPIO_CRH_CNF8_1 | GPIO_CRH_MODE8_1 );
+    //GPIOB->CRL |= ( GPIO_CRL_CNF0_1 | GPIO_CRL_MODE0_1 );
     
     
 }
@@ -205,19 +281,34 @@ void init_tim3(void){
     //setup clock for TIM3
     RCC->APB1ENR |= RCC_APB1ENR_TIM3EN; 
     
+    //afio enable
+    RCC->APB2ENR |= ( RCC_APB2ENR_AFIOEN  );
+                        
+                        
     //remap TIM3 fully to the GPIOC pins
     AFIO->MAPR |= AFIO_MAPR_TIM3_REMAP;
     
-    TIM3->PSC = (uint16_t)((SystemCoreClock / 100000)-1); //get 100000Hz
-    TIM3->PSC = (uint16_t)(255); //0-255 PWM value
+    TIM3->PSC = (uint16_t)(23999); //get 1000Hz
+    TIM3->ARR = (uint16_t)(255); //0-255 PWM value
     
-    //setup PWM Mode 1 with bits 111 for OC4
+    set_pwm_G_LED(132);
+    TIM3->CCR3 = 128;
+    
+    //setup PWM Mode 1 with bits 110 for OC4
     TIM3->CCMR2 |= ( TIM_CCMR2_OC4M_2 | TIM_CCMR2_OC4M_1 );
     //enable CC4 output 
     TIM3->CCER |= TIM_CCER_CC4E;
     
+    //setup PWM Mode 1 with bits 110 for OC3
+    TIM3->CCMR2 |= ( TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_1 );
+    //enable CC3 output 
+    TIM3->CCER |= TIM_CCER_CC3E;
+    
     //enable TIM3
     TIM3->CR1 |= TIM_CR1_CEN;
+    
+    //set_pwm_G_LED(132);
+    //TIM3->CCR3 = 128;
 }
 
 static __IO uint32_t TimingDelay;
