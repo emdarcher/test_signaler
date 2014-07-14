@@ -47,17 +47,15 @@ int main(void)
         while (1);
     
     while (1)   {
-        //int i;
-       
-        //while((TIM2->SR & TIM_SR_UIF) == 0); //wait till done sending pulse
+        while((TIM2->SR & TIM_SR_UIF) == 0); //wait till done sending pulse
         
         //set_pwm_G_LED(128);
         
-        //pulse_store = TIM4->CCR2;
-        //get_pulse_ms_tim4();
+        pulse_store = TIM4->CCR2;
+        get_pulse_ms_tim4();
         
-        //judge_pulse();
-        //set_LEDs();
+        judge_pulse();
+        set_LEDs();
     }
 }
 
@@ -92,7 +90,8 @@ void init_timers(void) {
                     GPIO_CRL_MODE6  );//| GPIO_CRL_MODE7  );
                     
     //PB8 output push pull, alternate function, 2MHz
-    GPIOB->CRH |= ( GPIO_CRH_CNF8_1 |
+    GPIOB->CRH |= ( GPIO_CRH_CNF8_1 |    GPIOC->CRH |= ( GPIO_CRH_CNF9_1 | GPIO_CRH_MODE9_1 );
+
                     GPIO_CRH_MODE8_1);
                     
     GPIOB->CRH &= ~(GPIO_CRH_CNF8_0 |
@@ -265,12 +264,14 @@ void init_LEDs(void){
     //GPIOC->CRH |= ( GPIO_CRH_MODE9 );
     //with AFIO for TIM3
     GPIOC->CRH |= ( GPIO_CRH_CNF9_1 | GPIO_CRH_MODE9_1 );
+    GPIOC->CRH &= ~(GPIO_CRH_CNF9_0 | GPIO_CRH_MODE9_0);
     //GPIOB->CRL |= ( GPIO_CRL_CNF1_1 | GPIO_CRL_MODE1_1);
     
     //PC8 output push-pull 2MHz
     //GPIOC->CRH |= ( GPIO_CRH_MODE8_1 );
     //for AFIO
     GPIOC->CRH |= ( GPIO_CRH_CNF8_1 | GPIO_CRH_MODE8_1 );
+    GPIOC->CRH &= ~(GPIO_CRH_CNF8_0 | GPIO_CRH_MODE8_0 );
     //GPIOB->CRL |= ( GPIO_CRL_CNF0_1 | GPIO_CRL_MODE0_1 );
     
     
@@ -291,16 +292,28 @@ void init_tim3(void){
     TIM3->PSC = (uint16_t)(23999); //get 1000Hz
     TIM3->ARR = (uint16_t)(255); //0-255 PWM value
     
-    set_pwm_G_LED(132);
-    TIM3->CCR3 = 128;
+    //set_pwm_G_LED(132);
+    //TIM3->CCR3 = 128;
     
     //setup PWM Mode 1 with bits 110 for OC4
     TIM3->CCMR2 |= ( TIM_CCMR2_OC4M_2 | TIM_CCMR2_OC4M_1 );
+    TIM3->CCMR2 &= ~( TIM_CCMR2_OC4M_0);
+    
+    //set direction
+    TIM3->CCMR2 &= ~(TIM_CCMR2_CC4S);
+    //set polarity
+    TIM3->CCER &= ~(TIM_CCER_CC4P);
     //enable CC4 output 
     TIM3->CCER |= TIM_CCER_CC4E;
-    
+   
     //setup PWM Mode 1 with bits 110 for OC3
     TIM3->CCMR2 |= ( TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_1 );
+    TIM3->CCMR2 &= ~(TIM_CCMR2_OC3M_0);
+    //set polarity
+    TIM3->CCER &= ~(TIM_CCER_CC3P);
+    //set dir
+    TIM3->CCMR2 &= ~(TIM_CCMR2_CC3S);
+    
     //enable CC3 output 
     TIM3->CCER |= TIM_CCER_CC3E;
     
@@ -311,7 +324,7 @@ void init_tim3(void){
     //TIM3->CCR3 = 128;
 }
 
-static __IO uint32_t TimingDelay;
+/*static __IO uint32_t TimingDelay;
 
 void Delay(uint32_t nTime) {
     TimingDelay = nTime;
@@ -321,7 +334,7 @@ void Delay(uint32_t nTime) {
 void SysTick_Handler(void) {
     if (TimingDelay != 0x00)
         TimingDelay--;
-}
+}*/
 
 #ifdef USE_FULL_ASSERT
 void assert_failed(uint8_t* file, uint32_t line)
