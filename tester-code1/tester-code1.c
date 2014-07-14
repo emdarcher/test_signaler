@@ -43,8 +43,8 @@ int main(void)
     //init_digit_pins();
     
     // Configure SysTick Timer
-    if (SysTick_Config(SystemCoreClock / 1000))
-        while (1);
+    //if (SysTick_Config(SystemCoreClock / 1000))
+    //    while (1);
     
     while (1)   {
         while((TIM2->SR & TIM_SR_UIF) == 0); //wait till done sending pulse
