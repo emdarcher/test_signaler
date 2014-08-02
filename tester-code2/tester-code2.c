@@ -47,7 +47,7 @@ int main(void)
     //    while (1);
     
     while (1)   {
-        //while((TIM2->SR & TIM_SR_UIF) == 0); //wait till done sending pulse
+        while((TIM2->SR & TIM_SR_UIF) == 0); //wait till done sending pulse
         //reset it
         //TIM2->SR &= ~TIM_SR_UIF;
         //set_pwm_G_LED(128);
